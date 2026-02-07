@@ -1,95 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateGreeting } from "@/lib/promptlayer";
-
-const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1/text-to-speech";
+import {
+  checkEnv,
+  errorToResponse,
+  generateGreetingAudio,
+  validateName,
+} from "@/lib/greet-api";
 
 export async function POST(request: NextRequest) {
   try {
-    const { name } = await request.json();
-
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
-      return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    const body = await request.json();
+    const nameResult = validateName(body?.name);
+    if (!nameResult.ok) {
+      const { status, body: resBody } = errorToResponse(nameResult.error);
+      return NextResponse.json(resBody, { status });
     }
 
-    const apiKey = process.env.ELEVENLABS_API_KEY;
-    const voiceId = process.env.ELEVENLABS_VOICE_ID;
-
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "ElevenLabs API key is not configured" },
-        { status: 500 },
-      );
+    const envError = checkEnv();
+    if (envError) {
+      const { status, body: resBody } = errorToResponse(envError);
+      return NextResponse.json(resBody, { status });
     }
 
-    if (!voiceId) {
-      return NextResponse.json(
-        { error: "ElevenLabs Voice ID is not configured" },
-        { status: 500 },
-      );
-    }
-
-    if (!process.env.PROMPTLAYER_API_KEY) {
-      return NextResponse.json(
-        { error: "PromptLayer API key is not configured" },
-        { status: 500 },
-      );
-    }
-
-    const sanitizedName = name.trim().slice(0, 100);
-
-    // Use PromptLayer to generate the greeting text via the "Island Prompt" template
-    let greetingText: string;
-    try {
-      greetingText = await generateGreeting(sanitizedName);
-    } catch (err) {
-      console.error("PromptLayer error:", err);
-      return NextResponse.json(
-        {
-          error: "Failed to generate greeting text",
-          details:
-            process.env.NODE_ENV === "development"
-              ? err instanceof Error
-                ? err.message
-                : String(err)
-              : undefined,
-        },
-        { status: 500 },
-      );
-    }
-
-    const response = await fetch(`${ELEVENLABS_API_URL}/${voiceId}`, {
-      method: "POST",
-      headers: {
-        "xi-api-key": apiKey,
-        "Content-Type": "application/json",
-        Accept: "audio/mpeg",
-      },
-      body: JSON.stringify({
-        text: greetingText,
-        model_id: "eleven_multilingual_v2",
-        voice_settings: {
-          stability: 0.4,
-          similarity_boost: 0.85,
-          style: 0.6,
-          use_speaker_boost: true,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error(`ElevenLabs API error (${response.status}):`, errorBody);
-      return NextResponse.json(
-        {
-          error: "Failed to generate speech",
-          details:
-            process.env.NODE_ENV === "development" ? errorBody : undefined,
-        },
-        { status: response.status },
-      );
-    }
-
-    const audioBuffer = await response.arrayBuffer();
+    const audioBuffer = await generateGreetingAudio(nameResult.name, false);
 
     return new NextResponse(audioBuffer, {
       status: 200,
@@ -99,11 +31,19 @@ export async function POST(request: NextRequest) {
         "Cache-Control": "no-store",
       },
     });
-  } catch (error) {
-    console.error("Greet API error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+  } catch (err) {
+    if (
+      err &&
+      typeof err === "object" &&
+      "code" in err &&
+      "status" in err &&
+      (err.code === "PROMPTLAYER_ERROR" || err.code === "ELEVENLABS_ERROR")
+    ) {
+      const { status, body } = errorToResponse(err as Parameters<typeof errorToResponse>[0]);
+      return NextResponse.json(body, { status });
+    }
+    console.error("Greet API error:", err);
+    const { status, body } = errorToResponse({ code: "INTERNAL", status: 500 });
+    return NextResponse.json(body, { status });
   }
 }

@@ -82,22 +82,29 @@ export function GreetingPlayer({
    */
   const playAudio = useCallback(
     (audio: HTMLAudioElement, name: string) => {
-      audio.addEventListener("ended", () => {
-        setGreetState("done");
-        if (!hideShareUrl) {
-          const slug = encodeURIComponent(name);
-          setShareUrl(`${window.location.origin}/${greetingType}/${slug}`);
-        }
-      });
+      audio.addEventListener(
+        "ended",
+        () => {
+          setGreetState("done");
+          if (!hideShareUrl) {
+            const slug = encodeURIComponent(name);
+            setShareUrl(`${window.location.origin}/${greetingType}/${slug}`);
+          }
+        },
+        { once: true },
+      );
 
-      audio.addEventListener("error", () => {
-        setGreetState("error");
-        setErrorMessage("Failed to play audio");
-      });
+      audio.addEventListener(
+        "error",
+        () => {
+          setGreetState("error");
+          setErrorMessage("Failed to play audio");
+        },
+        { once: true },
+      );
 
       setGreetState("playing");
       audio.play().catch(() => {
-        // If play still fails somehow, surface the error
         setGreetState("error");
         setErrorMessage("Playback was blocked. Please tap the play button.");
       });

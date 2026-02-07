@@ -20,9 +20,13 @@ interface PromptLayerResponse {
   };
 }
 
-const plClient = new PromptLayer({
-  apiKey: process.env.PROMPTLAYER_API_KEY,
-});
+function getPlClient(): PromptLayer {
+  const apiKey = process.env.PROMPTLAYER_API_KEY;
+  if (!apiKey) {
+    throw new Error("PROMPTLAYER_API_KEY is not set");
+  }
+  return new PromptLayer({ apiKey });
+}
 
 /**
  * Uses PromptLayer's "Island Prompt" template to generate a personalized
@@ -34,6 +38,7 @@ export async function generateGreeting(
   name: string,
   pussyclaat = false,
 ): Promise<string> {
+  const plClient = getPlClient();
   const response = (await plClient.run({
     promptName: pussyclaat ? "Island Prompt P" : "Island Prompt",
     promptReleaseLabel: "prod",
