@@ -82,6 +82,58 @@ async function fetchPromptTemplate(
 }
 
 /**
+ * Converts raw OpenAI messages into PromptLayer's Prompt Blueprint format.
+ */
+function messagesToBlueprint(messages: OpenAI.ChatCompletionMessageParam[]): {
+  type: string;
+  messages: Array<{
+    role: string;
+    content: Array<{ type: string; text: string }>;
+  }>;
+} {
+  return {
+    type: "chat",
+    messages: messages.map((msg) => ({
+      role: msg.role,
+      content:
+        typeof msg.content === "string"
+          ? [{ type: "text", text: msg.content }]
+          : Array.isArray(msg.content)
+            ? msg.content.map((part) => {
+                if ("text" in part) {
+                  return { type: "text", text: part.text };
+                }
+                return { type: "text", text: JSON.stringify(part) };
+              })
+            : [{ type: "text", text: String(msg.content ?? "") }],
+    })),
+  };
+}
+
+/**
+ * Converts an OpenAI chat completion response into PromptLayer's Prompt Blueprint format.
+ */
+function completionToBlueprint(completion: OpenAI.ChatCompletion): {
+  type: string;
+  messages: Array<{
+    role: string;
+    content: Array<{ type: string; text: string }>;
+  }>;
+} {
+  const choice = completion.choices?.[0];
+  const text = choice?.message?.content ?? "";
+  return {
+    type: "chat",
+    messages: [
+      {
+        role: "assistant",
+        content: [{ type: "text", text }],
+      },
+    ],
+  };
+}
+
+/**
  * Logs a completed request back to PromptLayer for tracking.
  * Fire-and-forget — errors are logged but not thrown.
  */
@@ -90,17 +142,19 @@ async function logToPromptLayer(
   promptVersion: number,
   promptId: number,
   inputVariables: Record<string, string>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  input: any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  output: any,
+  messages: OpenAI.ChatCompletionMessageParam[],
+  completion: OpenAI.ChatCompletion,
   model: string,
-  requestStartTime: string,
-  requestEndTime: string,
+  requestStartTime: number,
+  requestEndTime: number,
 ): Promise<void> {
   try {
     const plApiKey = getPromptLayerApiKey();
-    await fetch(`${PROMPTLAYER_API_URL}/log-request`, {
+
+    const inputBlueprint = messagesToBlueprint(messages);
+    const outputBlueprint = completionToBlueprint(completion);
+
+    const res = await fetch(`${PROMPTLAYER_API_URL}/log-request`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -109,8 +163,8 @@ async function logToPromptLayer(
       body: JSON.stringify({
         provider: "openai",
         model,
-        input,
-        output,
+        input: inputBlueprint,
+        output: outputBlueprint,
         request_start_time: requestStartTime,
         request_end_time: requestEndTime,
         prompt_name: promptName,
@@ -118,8 +172,16 @@ async function logToPromptLayer(
         prompt_version_number: promptVersion,
         prompt_input_variables: inputVariables,
         function_name: "openai.chat.completions.create",
+        api_type: "chat-completions",
+        input_tokens: completion.usage?.prompt_tokens ?? 0,
+        output_tokens: completion.usage?.completion_tokens ?? 0,
       }),
     });
+
+    if (!res.ok) {
+      const body = await res.text();
+      console.error(`PromptLayer log-request failed (${res.status}): ${body}`);
+    }
   } catch (err) {
     console.error("Failed to log request to PromptLayer:", err);
   }
@@ -170,7 +232,7 @@ export async function generateGreeting(
 
   // 3. Call OpenAI directly
   const openai = new OpenAI({ apiKey: getOpenAIApiKey() });
-  const requestStartTime = new Date().toISOString();
+  const requestStartTime = Date.now() / 1000;
 
   const completion = await openai.chat.completions.create({
     model,
@@ -178,7 +240,7 @@ export async function generateGreeting(
     ...extraParams,
   });
 
-  const requestEndTime = new Date().toISOString();
+  const requestEndTime = Date.now() / 1000;
 
   // 4. Extract the generated text from the OpenAI response
   const choice = completion.choices?.[0];
@@ -194,7 +256,7 @@ export async function generateGreeting(
     template.version,
     template.id,
     inputVariables,
-    { messages },
+    messages,
     completion,
     model,
     requestStartTime,
