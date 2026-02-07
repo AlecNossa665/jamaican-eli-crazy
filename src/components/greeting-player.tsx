@@ -44,11 +44,6 @@ export function GreetingPlayer({
     }
   }, []);
 
-  /**
-   * Fetches the greeting audio from the API and prepares an Audio element.
-   * Does NOT call audio.play() — that must be done from a user gesture.
-   * Returns the Audio element if successful, or throws on failure.
-   */
   const fetchGreetingAudio = useCallback(
     async (name: string): Promise<HTMLAudioElement> => {
       const apiEndpoint =
@@ -76,10 +71,6 @@ export function GreetingPlayer({
     [greetingType],
   );
 
-  /**
-   * Attaches "ended" and "error" listeners and plays the audio.
-   * Must be called from within a user-gesture call stack.
-   */
   const playAudio = useCallback(
     (audio: HTMLAudioElement, name: string) => {
       audio.addEventListener(
@@ -98,7 +89,7 @@ export function GreetingPlayer({
         "error",
         () => {
           setGreetState("error");
-          setErrorMessage("Failed to play audio");
+          setErrorMessage("Di spirits couldn't carry di message. Try again.");
         },
         { once: true },
       );
@@ -106,15 +97,14 @@ export function GreetingPlayer({
       setGreetState("playing");
       audio.play().catch(() => {
         setGreetState("error");
-        setErrorMessage("Playback was blocked. Please tap the play button.");
+        setErrorMessage(
+          "Di Oracle need yuh permission fi speak. Tap di play button, seen?",
+        );
       });
     },
     [greetingType, hideShareUrl],
   );
 
-  /**
-   * Full flow: fetch + play. Used when triggered by a user gesture (form submit).
-   */
   const generateGreeting = useCallback(
     async (name: string) => {
       const trimmed = name.trim();
@@ -134,17 +124,15 @@ export function GreetingPlayer({
         console.error("Greet error:", err);
         setGreetState("error");
         setErrorMessage(
-          err instanceof Error ? err.message : "Something went wrong",
+          err instanceof Error
+            ? err.message
+            : "Di spirits dem gone silent. Try again.",
         );
       }
     },
     [cleanup, fetchGreetingAudio, playAudio],
   );
 
-  /**
-   * Fetch-only flow: used for autoPlay so audio is pre-buffered,
-   * then waits for a user tap to actually play.
-   */
   const prefetchGreeting = useCallback(
     async (name: string) => {
       const trimmed = name.trim();
@@ -159,28 +147,25 @@ export function GreetingPlayer({
 
       try {
         await fetchGreetingAudio(trimmed);
-        // Audio is buffered and ready — wait for user gesture
         setGreetState("ready");
       } catch (err) {
         console.error("Greet prefetch error:", err);
         setGreetState("error");
         setErrorMessage(
-          err instanceof Error ? err.message : "Something went wrong",
+          err instanceof Error
+            ? err.message
+            : "Di spirits dem gone silent. Try again.",
         );
       }
     },
     [cleanup, fetchGreetingAudio],
   );
 
-  /**
-   * Called when the user taps the play button in the "ready" state.
-   * This is a direct user gesture so audio.play() is allowed.
-   */
   const handleTapToPlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) {
       setGreetState("error");
-      setErrorMessage("Audio not loaded. Try again.");
+      setErrorMessage("Di prophecy neva load. Seek again, bredren.");
       return;
     }
     playAudio(audio, greetedName);
@@ -189,17 +174,15 @@ export function GreetingPlayer({
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      // Form submit is a user gesture, so we can fetch + play directly
       await generateGreeting(value);
     },
     [value, generateGreeting],
   );
 
-  // Auto-fetch (NOT auto-play) on mount when autoPlay + initialName
+  // Auto-fetch on mount when autoPlay + initialName
   useEffect(() => {
     if (autoPlay && initialName && !hasAutoFetched.current) {
       hasAutoFetched.current = true;
-      // Defer to avoid synchronous setState inside effect body
       setTimeout(() => prefetchGreeting(initialName), 0);
     }
   }, [autoPlay, initialName, prefetchGreeting]);
@@ -216,7 +199,6 @@ export function GreetingPlayer({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback for insecure contexts
       const textArea = document.createElement("textarea");
       textArea.value = shareUrl;
       textArea.style.position = "fixed";
@@ -231,7 +213,6 @@ export function GreetingPlayer({
   }, [shareUrl]);
 
   const handlePlayAgain = useCallback(() => {
-    // If we're on a shared page (have initialName and autoPlay), redirect to home
     if (initialName && autoPlay) {
       window.location.href = "/";
     } else {
@@ -248,54 +229,82 @@ export function GreetingPlayer({
     switch (greetState) {
       case "loading":
         return (
-          <span className="flex items-center justify-center gap-2 text-yellow-400">
-            <LoadingDots />
-            Generating greeting for {greetedName}…
+          <span className="flex items-center justify-center gap-2 text-amber-400">
+            <IncenseSmoke />
+            <span className="italic">
+              Di spirits dem a channel fi{" "}
+              <span className="font-semibold text-amber-300">
+                {greetedName}
+              </span>
+              …
+            </span>
           </span>
         );
       case "ready":
         return (
-          <span className="text-zinc-400">
-            Greeting ready for {greetedName} — tap play!
+          <span className="text-green-400/80 italic">
+            Di prophecy ready fi{" "}
+            <span className="font-semibold text-green-300">{greetedName}</span>{" "}
+            — tap fi receive it!
           </span>
         );
       case "playing":
         return (
           <span className="flex items-center justify-center gap-2 text-green-400">
             <SpeakerIcon />
-            {greetingType === "pussyclaat" ? "Pussyclaat!" : "Bomboclaat!"}{" "}
-            Playing greeting for {greetedName}
+            <span className="italic">
+              🔥 {greetingType === "pussyclaat" ? "Pussyclaat!" : "Bomboclaat!"}{" "}
+              Di Prophet speaks to{" "}
+              <span className="font-semibold text-green-300">
+                {greetedName}
+              </span>
+              …
+            </span>
           </span>
         );
       case "done":
         return (
-          <div className="flex flex-col items-center gap-3">
-            <span className="text-green-400">
-              ✓ Greeting played for {greetedName}
-            </span>
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-xs text-amber-600/60" aria-hidden>
+                ✦ ✦ ✦
+              </span>
+              <span className="text-green-400 italic">
+                Di Oracle has spoken fi{" "}
+                <span className="font-semibold text-green-300">
+                  {greetedName}
+                </span>
+              </span>
+              <span className="text-[10px] text-amber-600/50 tracking-widest uppercase">
+                So it go, seen?
+              </span>
+            </div>
             {!hideShareUrl && shareUrl && (
               <div className="flex w-full flex-col items-center gap-2">
-                <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-zinc-500">
-                  Share this greeting
+                <p
+                  className="text-[11px] font-medium uppercase tracking-[0.2em] text-amber-600/60"
+                  style={{ fontFamily: "'Cinzel', serif" }}
+                >
+                  Spread di Prophecy
                 </p>
                 <div className="flex w-full items-center gap-2">
-                  <div className="flex-1 truncate rounded-md border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-300">
+                  <div className="flex-1 truncate rounded-lg border border-green-800/40 bg-green-950/50 px-3 py-2 text-sm text-amber-200/80">
                     {shareUrl}
                   </div>
                   <button
                     type="button"
                     onClick={handleCopy}
-                    className="shrink-0 rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:bg-zinc-700 hover:text-zinc-100"
+                    className="shrink-0 rounded-lg border border-amber-700/40 bg-amber-900/30 px-3 py-2 text-sm text-amber-300/90 transition-all hover:border-amber-500/60 hover:bg-amber-800/40 hover:text-amber-200 hover:shadow-[0_0_12px_rgba(180,140,20,0.15)]"
                   >
-                    {copied ? "Copied!" : "Copy"}
+                    {copied ? "Blessed! ✓" : "Copy Link"}
                   </button>
                 </div>
                 <button
                   type="button"
                   onClick={handlePlayAgain}
-                  className="mt-1 text-xs text-zinc-500 underline underline-offset-2 transition-colors hover:text-zinc-300"
+                  className="mt-2 text-xs text-green-600/70 underline underline-offset-2 transition-colors hover:text-green-400"
                 >
-                  Generate another
+                  Seek another prophecy
                 </button>
               </div>
             )}
@@ -303,9 +312,9 @@ export function GreetingPlayer({
               <button
                 type="button"
                 onClick={handlePlayAgain}
-                className="mt-1 text-xs text-zinc-500 underline underline-offset-2 transition-colors hover:text-zinc-300"
+                className="mt-1 text-xs text-green-600/70 underline underline-offset-2 transition-colors hover:text-green-400"
               >
-                Generate another
+                Seek another prophecy
               </button>
             )}
           </div>
@@ -314,23 +323,23 @@ export function GreetingPlayer({
         return (
           <div className="flex flex-col items-center gap-2">
             <span className="text-red-400">
-              {errorMessage || "Something went wrong"}
+              🔥 {errorMessage || "Di spirits dem gone silent."}
             </span>
             <button
               type="button"
               onClick={handlePlayAgain}
-              className="text-xs text-zinc-500 underline underline-offset-2 transition-colors hover:text-zinc-300"
+              className="text-xs text-amber-600/70 underline underline-offset-2 transition-colors hover:text-amber-400"
             >
-              Try again
+              Try seek di Oracle again
             </button>
           </div>
         );
       default:
         return (
-          <span className="text-zinc-600">
+          <span className="text-green-700/70 italic">
             {initialName
-              ? "Press Enter to hear the greeting"
-              : "Enter a name and some information, then press Enter to hear the greeting"}
+              ? "Press Enter fi hear di prophecy"
+              : "Whisper a name to di Oracle… den press Enter"}
           </span>
         );
     }
@@ -338,13 +347,14 @@ export function GreetingPlayer({
 
   return (
     <>
-      {/* Pulsing ring when playing */}
+      {/* Mystical pulsing ring when playing */}
       {greetState === "playing" && (
         <div className="flex items-center justify-center">
-          <div className="absolute h-32 w-32 animate-ping rounded-full bg-green-500/10" />
-          <div className="absolute h-24 w-24 animate-pulse rounded-full bg-green-500/20" />
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-green-500/30">
-            <SpeakerIcon className="h-8 w-8 text-green-400" />
+          <div className="absolute h-36 w-36 animate-ping rounded-full bg-green-500/10" />
+          <div className="absolute h-28 w-28 animate-pulse rounded-full bg-amber-500/10" />
+          <div className="absolute h-20 w-20 animate-pulse rounded-full bg-green-500/15 [animation-delay:300ms]" />
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-green-600/30 to-amber-600/30 shadow-[0_0_40px_rgba(34,197,94,0.2)]">
+            <SpeakerIcon className="h-8 w-8 text-amber-300" />
           </div>
         </div>
       )}
@@ -356,18 +366,23 @@ export function GreetingPlayer({
           onClick={handleTapToPlay}
           className="group flex flex-col items-center gap-4 focus:outline-none"
         >
-          <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-2 border-green-500/40 bg-green-500/10 transition-all group-hover:scale-110 group-hover:border-green-400/60 group-hover:bg-green-500/20 group-active:scale-95">
+          <div className="relative flex h-28 w-28 items-center justify-center rounded-full border-2 border-amber-500/30 bg-gradient-to-br from-green-600/10 to-amber-600/10 transition-all group-hover:scale-110 group-hover:border-amber-400/50 group-hover:shadow-[0_0_50px_rgba(180,140,20,0.2)] group-active:scale-95">
+            {/* Inner glow ring */}
+            <div className="absolute inset-2 rounded-full border border-green-500/20 group-hover:border-green-400/30" />
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="currentColor"
-              className="ml-1 h-10 w-10 text-green-400 transition-colors group-hover:text-green-300"
+              className="ml-1 h-12 w-12 text-amber-400 transition-colors group-hover:text-amber-300 drop-shadow-[0_0_8px_rgba(180,140,20,0.4)]"
             >
               <polygon points="6 3 20 12 6 21 6 3" />
             </svg>
           </div>
-          <span className="text-sm font-medium text-zinc-400 transition-colors group-hover:text-zinc-200">
-            Tap to play
+          <span
+            className="text-sm font-medium tracking-[0.15em] uppercase text-amber-500/70 transition-colors group-hover:text-amber-300"
+            style={{ fontFamily: "'Cinzel', serif" }}
+          >
+            Receive Di Prophecy
           </span>
         </button>
       )}
@@ -378,21 +393,28 @@ export function GreetingPlayer({
             <>
               <label
                 htmlFor="landing-input"
-                className="mb-3 block text-center text-xs font-medium uppercase tracking-[0.2em] text-zinc-500"
+                className="mb-3 block text-center text-xs font-medium uppercase tracking-[0.25em] text-amber-600/60"
+                style={{ fontFamily: "'Cinzel', serif" }}
               >
-                Enter a name and some information
+                Speak a name unto di Oracle
               </label>
-              <Input
-                id="landing-input"
-                name="name"
-                type="text"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                placeholder="Type a name..."
-                disabled={greetState === "loading" || greetState === "playing"}
-                className="h-14 w-full rounded-lg border border-zinc-800 bg-zinc-900/80 px-5 text-base text-zinc-100 shadow-inner placeholder:text-zinc-600 focus-visible:border-zinc-600 focus-visible:ring-2 focus-visible:ring-zinc-500/20 focus-visible:ring-offset-0 focus-visible:ring-offset-[#08090c] disabled:opacity-50"
-                autoFocus
-              />
+              <div className="relative">
+                <Input
+                  id="landing-input"
+                  name="name"
+                  type="text"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  placeholder="Whisper a name…"
+                  disabled={
+                    greetState === "loading" || greetState === "playing"
+                  }
+                  className="h-14 w-full rounded-lg border border-green-800/40 bg-green-950/40 px-5 text-base text-amber-100 shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] placeholder:text-green-700/50 placeholder:italic focus-visible:border-amber-600/50 focus-visible:ring-2 focus-visible:ring-amber-500/20 focus-visible:ring-offset-0 focus-visible:ring-offset-[#050a03] disabled:opacity-50"
+                  autoFocus
+                />
+                {/* Subtle glow under the input */}
+                <div className="pointer-events-none absolute -bottom-1 left-1/2 h-px w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-amber-600/20 to-transparent" />
+              </div>
             </>
           )}
           <p className="mt-4 text-center text-xs">{statusContent()}</p>
@@ -402,7 +424,6 @@ export function GreetingPlayer({
           <div className="text-center text-xs">{statusContent()}</div>
         </div>
       ) : (
-        /* "ready" state — status shown below the play button */
         <p className="mt-2 text-center text-xs">{statusContent()}</p>
       )}
     </>
@@ -411,12 +432,12 @@ export function GreetingPlayer({
 
 /* ── Tiny inline icons ── */
 
-function LoadingDots() {
+function IncenseSmoke() {
   return (
-    <span className="inline-flex gap-0.75">
-      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-yellow-400 [animation-delay:0ms]" />
-      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-yellow-400 [animation-delay:150ms]" />
-      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-yellow-400 [animation-delay:300ms]" />
+    <span className="inline-flex gap-1 items-center">
+      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-amber-400 [animation-delay:0ms]" />
+      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-green-400 [animation-delay:150ms]" />
+      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-amber-400 [animation-delay:300ms]" />
     </span>
   );
 }

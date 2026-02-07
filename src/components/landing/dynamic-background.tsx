@@ -4,22 +4,25 @@ import { useEffect, useRef } from "react";
 import { createNoise3D } from "simplex-noise";
 
 /**
- * Hotlink-style background (ertdfgcvb)
- * 3D Open Simplex Noise driven by (x, y, time). Value mapped to deep purple palette.
- * @see https://github.com/ertdfgcvb (Function hotlink example)
+ * Rasta Prophet – Mystic Background
+ * 3D Open Simplex Noise with a deep green / gold / red Rastafari palette.
+ * Feels like gazing into incense smoke under a tropical canopy at dusk.
  */
 
-// Deep purple palette – noise value 0..1 maps to these (dark → light)
-const DEEP_PURPLES = [
-  [0x0d, 0x06, 0x18],
-  [0x1a, 0x0a, 0x2e],
-  [0x2d, 0x1b, 0x4e],
-  [0x4a, 0x2c, 0x6d],
-  [0x6b, 0x3a, 0x8f],
+// Rasta palette – noise value 0..1 maps to these (dark → light)
+const RASTA_PALETTE = [
+  [0x05, 0x0a, 0x03], // near-black jungle floor
+  [0x0c, 0x1e, 0x08], // deep forest green
+  [0x1a, 0x3a, 0x0e], // rich green
+  [0x3a, 0x2a, 0x05], // earthy gold-brown
+  [0x6b, 0x5a, 0x0a], // warm gold
+  [0x8c, 0x6d, 0x0f], // bright gold
+  [0x5c, 0x1a, 0x0a], // deep red ember
+  [0x7a, 0x22, 0x10], // burning red
 ];
 
-const S = 0.03; // scale (from Hotlink: coord.x * s)
-const TIME_SCALE = 0.0007; // context.time * 0.0007
+const S = 0.025; // scale – slightly tighter than before for more texture
+const TIME_SCALE = 0.0005; // slower drift for a meditative, prophetic feel
 
 export function DynamicBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -50,11 +53,10 @@ export function DynamicBackground() {
     const draw = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      time += TIME_SCALE * 16; // ~60fps: 0.0007 * 16 ≈ 0.011 per frame
+      time += TIME_SCALE * 16; // ~60fps
       const t = time;
 
       const aspect = w / h;
-      // Render at reduced resolution for performance, then scale up
       const rw = Math.max(1, Math.floor(w / 3));
       const rh = Math.max(1, Math.floor(h / 3));
 
@@ -63,16 +65,31 @@ export function DynamicBackground() {
 
       for (let j = 0; j < rh; j++) {
         for (let i = 0; i < rw; i++) {
-          // Hotlink: x = coord.x * s, y = coord.y * s / aspect + t
           const x = i * S;
           const y = (j * S) / aspect + t;
-          const n = noise3D(x, y, t);
-          const value = n * 0.5 + 0.5; // 0..1
+
+          // Layer two noise octaves for richer texture
+          const n1 = noise3D(x, y, t);
+          const n2 = noise3D(x * 2.5, y * 2.5, t * 1.3) * 0.35;
+          const n = n1 + n2;
+          const value = n * 0.4 + 0.5; // remap to ~0..1
+
+          const clamped = Math.max(0, Math.min(value, 0.999));
           const idx = Math.min(
-            Math.floor(value * DEEP_PURPLES.length),
-            DEEP_PURPLES.length - 1
+            Math.floor(clamped * RASTA_PALETTE.length),
+            RASTA_PALETTE.length - 1,
           );
-          const [r, g, b] = DEEP_PURPLES[idx];
+
+          // Interpolate between current and next palette entry for smoothness
+          const frac = clamped * RASTA_PALETTE.length - idx;
+          const nextIdx = Math.min(idx + 1, RASTA_PALETTE.length - 1);
+          const [r1, g1, b1] = RASTA_PALETTE[idx];
+          const [r2, g2, b2] = RASTA_PALETTE[nextIdx];
+
+          const r = Math.round(r1 + (r2 - r1) * frac);
+          const g = Math.round(g1 + (g2 - g1) * frac);
+          const b = Math.round(b1 + (b2 - b1) * frac);
+
           const off = (j * rw + i) * 4;
           data[off] = r;
           data[off + 1] = g;

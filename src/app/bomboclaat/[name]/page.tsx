@@ -17,8 +17,9 @@ export default function BomboclaatPage({
     <LandingLayout
       subtitle={
         <>
-          Incoming greeting for{" "}
-          <span className="font-semibold text-zinc-200">{decodedName}</span>
+          Di spirits have a message fi{" "}
+          <span className="font-semibold text-amber-300">{decodedName}</span>…
+          prepare yuhself
         </>
       }
     >
