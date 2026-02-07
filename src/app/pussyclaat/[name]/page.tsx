@@ -4,7 +4,7 @@ import { GreetingPlayer } from "@/components/greeting-player";
 import { DynamicBackground } from "@/components/landing/dynamic-background";
 import { use } from "react";
 
-export default function BomboclaatPage({
+export default function PussyclaatPage({
   params,
 }: {
   params: Promise<{ name: string }>;
@@ -40,7 +40,12 @@ export default function BomboclaatPage({
             <span className="font-semibold text-zinc-200">{decodedName}</span>
           </p>
 
-          <GreetingPlayer initialName={decodedName} autoPlay hideShareUrl />
+          <GreetingPlayer
+            initialName={decodedName}
+            autoPlay
+            greetingType="pussyclaat"
+            hideShareUrl
+          />
         </div>
 
         <footer className="absolute bottom-8 left-0 right-0 text-center">

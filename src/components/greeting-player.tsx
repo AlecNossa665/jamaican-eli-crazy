@@ -10,11 +10,17 @@ interface GreetingPlayerProps {
   initialName?: string;
   /** If true, automatically starts fetching audio as soon as the component mounts with an initialName. */
   autoPlay?: boolean;
+  /** The type of greeting - determines API endpoint and share URL */
+  greetingType?: "bomboclaat" | "pussyclaat";
+  /** If true, hides the share URL */
+  hideShareUrl?: boolean;
 }
 
 export function GreetingPlayer({
   initialName = "",
   autoPlay = false,
+  greetingType = "bomboclaat",
+  hideShareUrl = false,
 }: GreetingPlayerProps) {
   const [value, setValue] = useState(initialName);
   const [greetState, setGreetState] = useState<GreetState>("idle");
@@ -45,7 +51,9 @@ export function GreetingPlayer({
    */
   const fetchGreetingAudio = useCallback(
     async (name: string): Promise<HTMLAudioElement> => {
-      const response = await fetch("/api/greet", {
+      const apiEndpoint =
+        greetingType === "pussyclaat" ? "/api/greet-pussyclaat" : "/api/greet";
+      const response = await fetch(apiEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
@@ -65,32 +73,37 @@ export function GreetingPlayer({
 
       return audio;
     },
-    [],
+    [greetingType],
   );
 
   /**
    * Attaches "ended" and "error" listeners and plays the audio.
    * Must be called from within a user-gesture call stack.
    */
-  const playAudio = useCallback((audio: HTMLAudioElement, name: string) => {
-    audio.addEventListener("ended", () => {
-      setGreetState("done");
-      const slug = encodeURIComponent(name);
-      setShareUrl(`${window.location.origin}/bomboclaat/${slug}`);
-    });
+  const playAudio = useCallback(
+    (audio: HTMLAudioElement, name: string) => {
+      audio.addEventListener("ended", () => {
+        setGreetState("done");
+        if (!hideShareUrl) {
+          const slug = encodeURIComponent(name);
+          setShareUrl(`${window.location.origin}/${greetingType}/${slug}`);
+        }
+      });
 
-    audio.addEventListener("error", () => {
-      setGreetState("error");
-      setErrorMessage("Failed to play audio");
-    });
+      audio.addEventListener("error", () => {
+        setGreetState("error");
+        setErrorMessage("Failed to play audio");
+      });
 
-    setGreetState("playing");
-    audio.play().catch(() => {
-      // If play still fails somehow, surface the error
-      setGreetState("error");
-      setErrorMessage("Playback was blocked. Please tap the play button.");
-    });
-  }, []);
+      setGreetState("playing");
+      audio.play().catch(() => {
+        // If play still fails somehow, surface the error
+        setGreetState("error");
+        setErrorMessage("Playback was blocked. Please tap the play button.");
+      });
+    },
+    [greetingType, hideShareUrl],
+  );
 
   /**
    * Full flow: fetch + play. Used when triggered by a user gesture (form submit).
@@ -211,13 +224,18 @@ export function GreetingPlayer({
   }, [shareUrl]);
 
   const handlePlayAgain = useCallback(() => {
-    cleanup();
-    setGreetState("idle");
-    setShareUrl("");
-    setCopied(false);
-    setGreetedName("");
-    if (!initialName) setValue("");
-  }, [initialName, cleanup]);
+    // If we're on a shared page (have initialName and autoPlay), redirect to home
+    if (initialName && autoPlay) {
+      window.location.href = "/";
+    } else {
+      cleanup();
+      setGreetState("idle");
+      setShareUrl("");
+      setCopied(false);
+      setGreetedName("");
+      if (!initialName) setValue("");
+    }
+  }, [initialName, autoPlay, cleanup]);
 
   const statusContent = () => {
     switch (greetState) {
@@ -238,7 +256,8 @@ export function GreetingPlayer({
         return (
           <span className="flex items-center justify-center gap-2 text-green-400">
             <SpeakerIcon />
-            Bomboclaat! Playing greeting for {greetedName}
+            {greetingType === "pussyclaat" ? "Pussyclaat!" : "Bomboclaat!"}{" "}
+            Playing greeting for {greetedName}
           </span>
         );
       case "done":
@@ -247,7 +266,7 @@ export function GreetingPlayer({
             <span className="text-green-400">
               ✓ Greeting played for {greetedName}
             </span>
-            {shareUrl && (
+            {!hideShareUrl && shareUrl && (
               <div className="flex w-full flex-col items-center gap-2">
                 <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-zinc-500">
                   Share this greeting
@@ -272,6 +291,15 @@ export function GreetingPlayer({
                   Generate another
                 </button>
               </div>
+            )}
+            {hideShareUrl && (
+              <button
+                type="button"
+                onClick={handlePlayAgain}
+                className="mt-1 text-xs text-zinc-500 underline underline-offset-2 transition-colors hover:text-zinc-300"
+              >
+                Generate another
+              </button>
             )}
           </div>
         );

@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     // Use PromptLayer to generate the greeting text via the "Island Prompt" template
     let greetingText: string;
     try {
-      greetingText = await generateGreeting(sanitizedName);
+      greetingText = await generateGreeting(sanitizedName, true);
     } catch (err) {
       console.error("PromptLayer error:", err);
       return NextResponse.json(
