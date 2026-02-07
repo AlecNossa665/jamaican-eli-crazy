@@ -47,7 +47,11 @@ export function DynamicBackground() {
       canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
+      // Reset transform (setting width/height clears context; be explicit so scale never stacks)
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
+      // Redraw immediately so there’s no blank or wrong-size frame after resize
+      draw();
     };
 
     const draw = () => {
