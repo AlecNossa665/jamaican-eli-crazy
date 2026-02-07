@@ -2,8 +2,16 @@
 
 import { GreetingPlayer } from "@/components/greeting-player";
 import { DynamicBackground } from "@/components/landing/dynamic-background";
+import { use } from "react";
 
-export default function LandingPage() {
+export default function BomboclaatPage({
+  params,
+}: {
+  params: Promise<{ name: string }>;
+}) {
+  const { name } = use(params);
+  const decodedName = decodeURIComponent(name);
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#08090c]">
       <DynamicBackground />
@@ -27,7 +35,12 @@ export default function LandingPage() {
             </span>
           </h1>
 
-          <GreetingPlayer />
+          <p className="text-center text-sm text-zinc-400">
+            Incoming greeting for{" "}
+            <span className="font-semibold text-zinc-200">{decodedName}</span>
+          </p>
+
+          <GreetingPlayer initialName={decodedName} autoPlay />
         </div>
 
         <footer className="absolute bottom-8 left-0 right-0 text-center">
