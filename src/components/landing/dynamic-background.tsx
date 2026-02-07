@@ -1,31 +1,25 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { createNoise3D } from "simplex-noise";
 
 /**
- * Stacked sin waves – horizontal orientation, deep purple palette.
- * Adapted from Raurir's "Stacked sin waves" (wave varies with x, bands stack vertically).
+ * Hotlink-style background (ertdfgcvb)
+ * 3D Open Simplex Noise driven by (x, y, time). Value mapped to deep purple palette.
+ * @see https://github.com/ertdfgcvb (Function hotlink example)
  */
 
-function wave(t: number, x: number, seeds: [number, number, number], amps: [number, number, number]) {
-  return (
-    (Math.sin(t + x * seeds[0]) + 1) * amps[0] +
-    (Math.sin(t + x * seeds[1]) + 1) * amps[1] +
-    Math.sin(t + x * seeds[2]) * amps[2]
-  );
-}
-
-// Deep purple palette (dark to light) – band indices 0..4
+// Deep purple palette – noise value 0..1 maps to these (dark → light)
 const DEEP_PURPLES = [
-  [0x0d, 0x06, 0x18], // 0 – darkest
+  [0x0d, 0x06, 0x18],
   [0x1a, 0x0a, 0x2e],
   [0x2d, 0x1b, 0x4e],
   [0x4a, 0x2c, 0x6d],
-  [0x6b, 0x3a, 0x8f], // 4 – lightest
+  [0x6b, 0x3a, 0x8f],
 ];
 
-// Scale factor so wave amplitude fits screen height (original amps ~10,8,5 etc.)
-const WAVE_SCALE = 0.15;
+const S = 0.03; // scale (from Hotlink: coord.x * s)
+const TIME_SCALE = 0.0007; // context.time * 0.0007
 
 export function DynamicBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -36,6 +30,8 @@ export function DynamicBackground() {
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    const noise3D = createNoise3D();
 
     let animationId: number;
     let time = 0;
@@ -52,44 +48,50 @@ export function DynamicBackground() {
     };
 
     const draw = () => {
-      const w = Math.floor(window.innerWidth);
-      const h = Math.floor(window.innerHeight);
-      time += 0.002;
-
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      time += TIME_SCALE * 16; // ~60fps: 0.0007 * 16 ≈ 0.011 per frame
       const t = time;
-      const base = h / 4;
 
-      const imageData = ctx.createImageData(w, h);
+      const aspect = w / h;
+      // Render at reduced resolution for performance, then scale up
+      const rw = Math.max(1, Math.floor(w / 3));
+      const rh = Math.max(1, Math.floor(h / 3));
+
+      const imageData = ctx.createImageData(rw, rh);
       const data = imageData.data;
 
-      for (let py = 0; py < h; py++) {
-        for (let px = 0; px < w; px++) {
-          // Wave depends on x (horizontal) → boundaries run horizontally, bands stack vertically
-          const v0 =
-            base +
-            wave(t, px, [0.15, 0.13, 0.37], [10, 8, 5]) * 0.9 * WAVE_SCALE;
-          const v1 =
-            v0 +
-            wave(t, px, [0.12, 0.14, 0.27], [3, 6, 5]) * 0.8 * WAVE_SCALE;
-          const v2 =
-            v1 +
-            wave(t, px, [0.089, 0.023, 0.217], [2, 4, 2]) * 0.3 * WAVE_SCALE;
-          const v3 =
-            v2 +
-            wave(t, px, [0.167, 0.054, 0.147], [4, 6, 7]) * 0.4 * WAVE_SCALE;
-
-          const i =
-            py < v0 ? 0 : py < v1 ? 1 : py < v2 ? 2 : py < v3 ? 3 : 4;
-          const [r, g, b] = DEEP_PURPLES[i];
-          const idx = (py * w + px) * 4;
-          data[idx] = r;
-          data[idx + 1] = g;
-          data[idx + 2] = b;
-          data[idx + 3] = 255;
+      for (let j = 0; j < rh; j++) {
+        for (let i = 0; i < rw; i++) {
+          // Hotlink: x = coord.x * s, y = coord.y * s / aspect + t
+          const x = i * S;
+          const y = (j * S) / aspect + t;
+          const n = noise3D(x, y, t);
+          const value = n * 0.5 + 0.5; // 0..1
+          const idx = Math.min(
+            Math.floor(value * DEEP_PURPLES.length),
+            DEEP_PURPLES.length - 1
+          );
+          const [r, g, b] = DEEP_PURPLES[idx];
+          const off = (j * rw + i) * 4;
+          data[off] = r;
+          data[off + 1] = g;
+          data[off + 2] = b;
+          data[off + 3] = 255;
         }
       }
 
-      ctx.putImageData(imageData, 0, 0);
+      const offscreen = document.createElement("canvas");
+      offscreen.width = rw;
+      offscreen.height = rh;
+      const octx = offscreen.getContext("2d");
+      if (!octx) return;
+      octx.putImageData(imageData, 0, 0);
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(offscreen, 0, 0, rw, rh, 0, 0, w, h);
+
       animationId = requestAnimationFrame(draw);
     };
 
