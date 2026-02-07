@@ -1,18 +1,9 @@
-import type { NextConfig } from "next";
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  images: {
+    domains: [],
+  }
+}
 
-const nextConfig: NextConfig = {
-  serverExternalPackages: [
-    "@anthropic-ai/bedrock-sdk",
-    "@anthropic-ai/sdk",
-    "@anthropic-ai/vertex-sdk",
-    "@google/genai",
-    "@mistralai/mistralai",
-    "@opentelemetry/api",
-    "@opentelemetry/sdk-trace-base",
-    "@opentelemetry/sdk-trace-node",
-    "openai",
-    "promptlayer",
-  ],
-};
-
-export default nextConfig;
+module.exports = nextConfig
