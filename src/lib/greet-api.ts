@@ -20,6 +20,7 @@ export type GreetApiError =
   | { code: "MISSING_ELEVENLABS_KEY"; status: 500 }
   | { code: "MISSING_VOICE_ID"; status: 500 }
   | { code: "MISSING_PROMPTLAYER_KEY"; status: 500 }
+  | { code: "MISSING_OPENAI_KEY"; status: 500 }
   | { code: "PROMPTLAYER_ERROR"; status: 500; details?: string }
   | { code: "ELEVENLABS_ERROR"; status: number; details?: string }
   | { code: "INTERNAL"; status: 500 };
@@ -46,6 +47,9 @@ export function checkEnv(): GreetApiError | null {
   }
   if (!process.env.PROMPTLAYER_API_KEY) {
     return { code: "MISSING_PROMPTLAYER_KEY", status: 500 };
+  }
+  if (!process.env.OPENAI_API_KEY) {
+    return { code: "MISSING_OPENAI_KEY", status: 500 };
   }
   return null;
 }
@@ -109,6 +113,7 @@ export function errorToResponse(error: GreetApiError): {
     MISSING_ELEVENLABS_KEY: "ElevenLabs API key is not configured",
     MISSING_VOICE_ID: "ElevenLabs Voice ID is not configured",
     MISSING_PROMPTLAYER_KEY: "PromptLayer API key is not configured",
+    MISSING_OPENAI_KEY: "OpenAI API key is not configured",
     PROMPTLAYER_ERROR: "Failed to generate greeting text",
     ELEVENLABS_ERROR: "Failed to generate speech",
     INTERNAL: "Internal server error",
