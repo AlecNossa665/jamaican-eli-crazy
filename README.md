@@ -54,6 +54,15 @@ src/
 │   └── utils.ts        # cn() etc.
 ```
 
+## Landing page: save name to Supabase
+
+The landing form saves the entered name to a `names` table. Create it once in your project:
+
+1. Open [Supabase Dashboard](https://supabase.com/dashboard) → your project → **SQL Editor**.
+2. Run the migration: copy and execute the contents of `supabase/migrations/001_create_names_table.sql`.
+
+This creates the `names` table and an RLS policy that allows anonymous inserts.
+
 ## Supabase usage
 
 - **Client Components:** `import { createClient } from "@/lib/supabase/client"`

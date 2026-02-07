@@ -111,10 +111,8 @@ export default function LandingPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#08090c]">
-      {/* Procedural dynamic background – ertdfgcvb.xyz style */}
       <DynamicBackground />
 
-      {/* Subtle grid overlay */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
         style={{
@@ -128,7 +126,6 @@ export default function LandingPage() {
 
       <main className="relative flex min-h-screen flex-col items-center justify-center px-6">
         <div className="flex w-full max-w-xl flex-col items-center gap-10">
-          {/* Large title */}
           <h1 className="text-center font-semibold tracking-tight text-zinc-100 select-none">
             <span className="block text-6xl sm:text-7xl md:text-8xl lg:text-9xl">
               bombaclApp
@@ -155,6 +152,7 @@ export default function LandingPage() {
             </label>
             <Input
               id="landing-input"
+              name="name"
               type="text"
               value={value}
               onChange={(e) => setValue(e.target.value)}
