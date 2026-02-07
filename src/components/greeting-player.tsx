@@ -294,7 +294,7 @@ export function GreetingPlayer({
                   <button
                     type="button"
                     onClick={handleCopy}
-                    className="shrink-0 rounded-lg border border-amber-700/40 bg-amber-900/30 px-3 py-2 text-sm text-amber-300/90 transition-all hover:border-amber-500/60 hover:bg-amber-800/40 hover:text-amber-200 hover:shadow-[0_0_12px_rgba(180,140,20,0.15)]"
+                    className="min-h-[44px] min-w-[44px] shrink-0 rounded-lg border border-amber-700/40 bg-amber-900/30 px-4 py-3 text-sm text-amber-300/90 transition-all hover:border-amber-500/60 hover:bg-amber-800/40 hover:text-amber-200 hover:shadow-[0_0_12px_rgba(180,140,20,0.15)] active:scale-[0.98]"
                   >
                     {copied ? "Blessed! ✓" : "Copy Link"}
                   </button>
@@ -302,7 +302,7 @@ export function GreetingPlayer({
                 <button
                   type="button"
                   onClick={handlePlayAgain}
-                  className="mt-2 text-xs text-green-600/70 underline underline-offset-2 transition-colors hover:text-green-400"
+                  className="mt-2 min-h-[44px] py-2 text-xs text-green-600/70 underline underline-offset-2 transition-colors hover:text-green-400 active:opacity-80"
                 >
                   Seek another prophecy
                 </button>
@@ -312,7 +312,7 @@ export function GreetingPlayer({
               <button
                 type="button"
                 onClick={handlePlayAgain}
-                className="mt-1 text-xs text-green-600/70 underline underline-offset-2 transition-colors hover:text-green-400"
+                className="mt-1 min-h-[44px] py-2 text-xs text-green-600/70 underline underline-offset-2 transition-colors hover:text-green-400 active:opacity-80"
               >
                 Seek another prophecy
               </button>
@@ -328,7 +328,7 @@ export function GreetingPlayer({
             <button
               type="button"
               onClick={handlePlayAgain}
-              className="text-xs text-amber-600/70 underline underline-offset-2 transition-colors hover:text-amber-400"
+              className="min-h-[44px] py-2 text-xs text-amber-600/70 underline underline-offset-2 transition-colors hover:text-amber-400 active:opacity-80"
             >
               Try seek di Oracle again
             </button>
@@ -364,9 +364,9 @@ export function GreetingPlayer({
         <button
           type="button"
           onClick={handleTapToPlay}
-          className="group flex flex-col items-center gap-4 focus:outline-none"
+          className="group flex min-h-[44px] min-w-[44px] flex-col items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050a03] sm:gap-4"
         >
-          <div className="relative flex h-28 w-28 items-center justify-center rounded-full border-2 border-amber-500/30 bg-gradient-to-br from-green-600/10 to-amber-600/10 transition-all group-hover:scale-110 group-hover:border-amber-400/50 group-hover:shadow-[0_0_50px_rgba(180,140,20,0.2)] group-active:scale-95">
+          <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-2 border-amber-500/30 bg-gradient-to-br from-green-600/10 to-amber-600/10 transition-all group-hover:scale-110 group-hover:border-amber-400/50 group-hover:shadow-[0_0_50px_rgba(180,140,20,0.2)] group-active:scale-95 sm:h-28 sm:w-28 touch-manipulation">
             {/* Inner glow ring */}
             <div className="absolute inset-2 rounded-full border border-green-500/20 group-hover:border-green-400/30" />
             <svg
@@ -409,7 +409,7 @@ export function GreetingPlayer({
                   disabled={
                     greetState === "loading" || greetState === "playing"
                   }
-                  className="h-14 w-full rounded-lg border border-green-800/40 bg-green-950/40 px-5 text-base text-amber-100 shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] placeholder:text-green-700/50 placeholder:italic focus-visible:border-amber-600/50 focus-visible:ring-2 focus-visible:ring-amber-500/20 focus-visible:ring-offset-0 focus-visible:ring-offset-[#050a03] disabled:opacity-50"
+                  className="h-14 min-h-[44px] w-full touch-manipulation rounded-lg border border-green-800/40 bg-green-950/40 px-5 text-base text-amber-100 shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] placeholder:text-green-700/50 placeholder:italic focus-visible:border-amber-600/50 focus-visible:ring-2 focus-visible:ring-amber-500/20 focus-visible:ring-offset-0 focus-visible:ring-offset-[#050a03] disabled:opacity-50"
                   autoFocus
                 />
                 {/* Subtle glow under the input */}

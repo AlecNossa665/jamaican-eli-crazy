@@ -16,14 +16,13 @@ interface LandingLayoutProps {
 
 export function LandingLayout({ children, subtitle }: LandingLayoutProps) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#050a03]">
+    <div className="relative min-h-dvh overflow-hidden bg-[#050a03] sm:min-h-screen">
       <DynamicBackground />
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
         style={GRID_STYLE}
       />
 
-      {/* Radial gold vignette for that incense-smoke-in-the-temple feel */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -32,8 +31,8 @@ export function LandingLayout({ children, subtitle }: LandingLayoutProps) {
         }}
       />
 
-      <main className="relative flex min-h-screen flex-col items-center justify-center px-6">
-        <div className="flex w-full max-w-xl flex-col items-center gap-8">
+      <main className="relative flex min-h-dvh flex-col items-center justify-center px-4 py-6 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:min-h-screen sm:px-6 sm:py-8">
+        <div className="flex w-full max-w-xl flex-col items-center gap-6 sm:gap-8">
           {/* Mystical Oracle Title */}
           <div className="flex flex-col items-center gap-3 select-none">
             {/* Decorative top flourish */}
@@ -48,7 +47,7 @@ export function LandingLayout({ children, subtitle }: LandingLayoutProps) {
               className="text-center font-bold tracking-tight text-amber-100"
               style={{ fontFamily: "'Cinzel Decorative', 'Cinzel', serif" }}
             >
-              <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl drop-shadow-[0_0_30px_rgba(180,140,20,0.3)]">
+              <span className="block text-4xl min-[400px]:text-5xl sm:text-6xl md:text-7xl lg:text-8xl drop-shadow-[0_0_30px_rgba(180,140,20,0.3)]">
                 bombaclApp
               </span>
             </h1>
@@ -81,17 +80,17 @@ export function LandingLayout({ children, subtitle }: LandingLayoutProps) {
           {children}
         </div>
 
-        <footer className="absolute bottom-8 left-0 right-0 flex flex-col items-center gap-1 text-center">
+        <footer className="absolute bottom-4 left-0 right-0 flex flex-col items-center gap-1 pb-[max(1rem,env(safe-area-inset-bottom))] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] text-center sm:bottom-8">
           <span className="text-[10px] tracking-[0.3em] text-green-700/50">
             ☽ ★ ☾
           </span>
           <span
-            className="text-[11px] font-medium tracking-[0.25em] text-amber-800/50"
+            className="text-[10px] font-medium tracking-[0.2em] text-amber-800/50 sm:text-[11px] sm:tracking-[0.25em]"
             style={{ fontFamily: "'Cinzel', serif" }}
           >
             JAMAICAN ELI CRAZY
           </span>
-          <span className="text-[9px] tracking-[0.2em] text-green-800/40 italic">
+          <span className="text-[8px] tracking-[0.15em] text-green-800/40 italic sm:text-[9px] sm:tracking-[0.2em]">
             Jah guide &amp; protect
           </span>
         </footer>

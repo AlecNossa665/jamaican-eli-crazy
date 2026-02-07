@@ -21,9 +21,22 @@ const RASTA_PALETTE = [
   [0x7a, 0x22, 0x10], // burning red
 ];
 
-const S = 0.025; // scale – slightly tighter than before for more texture
-const TIME_SCALE = 0.0005; // slower drift for a meditative, prophetic feel
-const RESIZE_DEBOUNCE_MS = 120;
+const S = 0.025;
+const TIME_SCALE = 0.0005;
+const MOBILE_BREAKPOINT = 640;
+const MOBILE_FRAME_INTERVAL_MS = 34; // ~30fps on mobile
+const MOBILE_RES_DIVISOR = 5;
+const DESKTOP_RES_DIVISOR = 3;
+
+function isMobileViewport(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.innerWidth < MOBILE_BREAKPOINT;
+}
+
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
 
 export function DynamicBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -43,6 +56,9 @@ export function DynamicBackground() {
     let offscreenCtx: CanvasRenderingContext2D | null = null;
     let lastRw = 0;
     let lastRh = 0;
+    let lastImageData: ImageData | null = null;
+    let lastFrameTime = 0;
+    const reducedMotion = prefersReducedMotion();
 
     const applyResize = () => {
       const dpr = Math.min(window.devicePixelRatio ?? 1, 2);
@@ -52,34 +68,51 @@ export function DynamicBackground() {
       canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
-      // Reset transform (setting width/height clears context; be explicit so scale never stacks)
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
-      // Redraw immediately so there’s no blank or wrong-size frame after resize
+      lastRw = 0;
+      lastRh = 0;
+      lastImageData = null;
     };
 
-    let resizeTimeoutId: ReturnType<typeof setTimeout> | null = null;
     const resize = () => {
-      if (resizeTimeoutId != null) clearTimeout(resizeTimeoutId);
-      resizeTimeoutId = setTimeout(() => {
-        resizeTimeoutId = null;
-        applyResize();
-        requestAnimationFrame(draw);
-      }, RESIZE_DEBOUNCE_MS);
+      applyResize();
     };
 
-    const draw = () => {
+    const draw = (now: number) => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      time += TIME_SCALE * 16; // ~60fps
+      const mobile = isMobileViewport();
+
+      if (reducedMotion) {
+        time = 0;
+      } else {
+        time += TIME_SCALE * 16;
+      }
       const t = time;
 
-      const aspect = w / h;
-      const rw = Math.max(1, Math.floor(w / 3));
-      const rh = Math.max(1, Math.floor(h / 3));
+      const divisor = mobile ? MOBILE_RES_DIVISOR : DESKTOP_RES_DIVISOR;
+      const rw = Math.max(1, Math.floor(w / divisor));
+      const rh = Math.max(1, Math.floor(h / divisor));
 
-      const imageData = ctx.createImageData(rw, rh);
+      if (mobile) {
+        const elapsed = now - lastFrameTime;
+        if (elapsed < MOBILE_FRAME_INTERVAL_MS && lastFrameTime > 0) {
+          animationId = requestAnimationFrame(draw);
+          return;
+        }
+        lastFrameTime = now;
+      }
+
+      let imageData = lastImageData;
+      if (!imageData || imageData.width !== rw || imageData.height !== rh) {
+        imageData = ctx.createImageData(rw, rh);
+        lastImageData = imageData;
+        lastRw = rw;
+        lastRh = rh;
+      }
       const data = imageData.data;
+      const aspect = w / h;
 
       for (let j = 0; j < rh; j++) {
         for (let i = 0; i < rw; i++) {
@@ -125,11 +158,9 @@ export function DynamicBackground() {
         lastRh = rh;
       }
       if (offscreen && offscreenCtx) {
-        offscreen.width = rw;
-        offscreen.height = rh;
         offscreenCtx.putImageData(imageData, 0, 0);
         ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = "high";
+        ctx.imageSmoothingQuality = mobile ? "low" : "high";
         ctx.drawImage(offscreen, 0, 0, rw, rh, 0, 0, w, h);
       }
 
@@ -138,11 +169,10 @@ export function DynamicBackground() {
 
     applyResize();
     window.addEventListener("resize", resize);
-    draw();
+    animationId = requestAnimationFrame(draw);
 
     return () => {
       window.removeEventListener("resize", resize);
-      if (resizeTimeoutId != null) clearTimeout(resizeTimeoutId);
       cancelAnimationFrame(animationId);
     };
   }, []);
