@@ -36,7 +36,7 @@ export async function generateGreeting(
 ): Promise<string> {
   const response = (await plClient.run({
     promptName: pussyclaat ? "Island Prompt P" : "Island Prompt",
-    promptLabel: "prod",
+    promptReleaseLabel: "prod",
     inputVariables: {
       name,
     },
