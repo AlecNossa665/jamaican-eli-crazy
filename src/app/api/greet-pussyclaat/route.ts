@@ -6,6 +6,9 @@ import {
   validateName,
 } from "@/lib/greet-api";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -39,7 +42,9 @@ export async function POST(request: NextRequest) {
       "status" in err &&
       (err.code === "PROMPTLAYER_ERROR" || err.code === "ELEVENLABS_ERROR")
     ) {
-      const { status, body } = errorToResponse(err as Parameters<typeof errorToResponse>[0]);
+      const { status, body } = errorToResponse(
+        err as Parameters<typeof errorToResponse>[0],
+      );
       return NextResponse.json(body, { status });
     }
     console.error("Greet pussyclaat API error:", err);
