@@ -8,8 +8,8 @@ A Next.js web app boilerplate with **Supabase**, **Tailwind CSS**, **shadcn/ui**
 - **UI:** React 19, Tailwind CSS v4, shadcn/ui (new-york style)
 - **Backend:** Supabase (auth + database via `@supabase/ssr`)
 - **Fonts:** Geist (sans + mono)
-- **Design:** Notion/Apple-inspired tokens (soft neutrals, rounded corners, subtle shadows)
-
+- **Design:** Notion/Apple-inspired tokens (soft neutrals, rounded corners, subtle shadows)s
+f
 ## Getting started
 
 ### 1. Install dependencies
