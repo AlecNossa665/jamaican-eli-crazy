@@ -323,7 +323,7 @@ export function GreetingPlayer({
           <span className="text-zinc-600">
             {initialName
               ? "Press Enter to hear the greeting"
-              : "Enter a name & press Enter to hear the greeting"}
+              : "Enter a name and some information, then press Enter to hear the greeting"}
           </span>
         );
     }
@@ -373,7 +373,7 @@ export function GreetingPlayer({
                 htmlFor="landing-input"
                 className="mb-3 block text-center text-xs font-medium uppercase tracking-[0.2em] text-zinc-500"
               >
-                Enter a name
+                Enter a name and some information
               </label>
               <Input
                 id="landing-input"
