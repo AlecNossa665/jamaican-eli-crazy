@@ -1,83 +1,76 @@
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+"use client";
+
+import { useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { DynamicBackground } from "@/components/landing/dynamic-background";
 
-export default function Home() {
+export default function LandingPage() {
+  const [value, setValue] = useState("");
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (value.trim()) {
+        console.log("Submitted:", value.trim());
+      }
+    },
+    [value]
+  );
+
   return (
-    <div className="min-h-screen">
-      {/* Notion/Apple-style layout: max-width container, generous padding */}
-      <div className="mx-auto max-w-3xl px-6 py-16 sm:px-8 lg:px-12">
-        <header className="mb-16">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            Jamaican Eli Crazy
+    <div className="relative min-h-screen overflow-hidden bg-[#08090c]">
+      {/* Procedural dynamic background – ertdfgcvb.xyz style */}
+      <DynamicBackground />
+
+      {/* Subtle grid overlay */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px)
+          `,
+          backgroundSize: "64px 64px",
+        }}
+      />
+
+      <main className="relative flex min-h-screen flex-col items-center justify-center px-6">
+        <div className="flex w-full max-w-xl flex-col items-center gap-10">
+          {/* Large title */}
+          <h1 className="text-center font-semibold tracking-tight text-zinc-100 select-none">
+            <span className="block text-6xl sm:text-7xl md:text-8xl lg:text-9xl">
+              bombaclApp
+            </span>
           </h1>
-          <p className="mt-2 text-muted-foreground">
-            Next.js · Supabase · shadcn · Notion-inspired design
-          </p>
-        </header>
 
-        <section className="space-y-8">
-          <div>
-            <h2 className="mb-4 text-lg font-medium text-foreground">
-              Design primitives
-            </h2>
-            <p className="text-muted-foreground">
-              This boilerplate uses Apple/Notion-inspired tokens: soft neutrals,
-              rounded corners, subtle shadows, and Geist for typography.
+          <form onSubmit={handleSubmit} className="w-full">
+            <label
+              htmlFor="landing-input"
+              className="mb-3 block text-center text-xs font-medium uppercase tracking-[0.2em] text-zinc-500"
+            >
+              Enter query
+            </label>
+            <Input
+              id="landing-input"
+              type="text"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="Type here..."
+              className="h-14 w-full rounded-lg border border-zinc-800 bg-zinc-900/80 px-5 text-base text-zinc-100 shadow-inner placeholder:text-zinc-600 focus-visible:border-zinc-600 focus-visible:ring-2 focus-visible:ring-zinc-500/20 focus-visible:ring-offset-0 focus-visible:ring-offset-[#08090c]"
+              autoFocus
+            />
+            <p className="mt-4 text-center text-xs text-zinc-600">
+              Press Enter to continue
             </p>
-          </div>
+          </form>
+        </div>
 
-          <div className="grid gap-6 sm:grid-cols-2">
-            <Card className="border-border bg-card shadow-(--shadow-sm)">
-              <CardHeader>
-                <CardTitle className="text-lg">Card</CardTitle>
-                <CardDescription>
-                  shadcn card with theme variables
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="demo">Label + Input</Label>
-                  <Input
-                    id="demo"
-                    placeholder="Placeholder"
-                    className="bg-background"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button>Primary</Button>
-                  <Button variant="secondary">Secondary</Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border bg-card shadow-(--shadow-sm)">
-              <CardHeader>
-                <CardTitle className="text-lg">Supabase</CardTitle>
-                <CardDescription>
-                  Auth and data via client & server utilities
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Use <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">createClient()</code> from{" "}
-                  <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">@/lib/supabase/client</code> or{" "}
-                  <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">@/lib/supabase/server</code>.
-                  Add <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">.env.local</code> from{" "}
-                  <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">.env.example</code>.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-      </div>
+        <footer className="absolute bottom-8 left-0 right-0 text-center">
+          <span className="text-[11px] font-medium tracking-widest text-zinc-700">
+            JAMAICAN ELI CRAZY
+          </span>
+        </footer>
+      </main>
     </div>
   );
 }
