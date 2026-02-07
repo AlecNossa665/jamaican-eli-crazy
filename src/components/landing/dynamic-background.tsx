@@ -23,6 +23,7 @@ const RASTA_PALETTE = [
 
 const S = 0.025; // scale – slightly tighter than before for more texture
 const TIME_SCALE = 0.0005; // slower drift for a meditative, prophetic feel
+const RESIZE_DEBOUNCE_MS = 120;
 
 export function DynamicBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -38,8 +39,12 @@ export function DynamicBackground() {
 
     let animationId: number;
     let time = 0;
+    let offscreen: HTMLCanvasElement | null = null;
+    let offscreenCtx: CanvasRenderingContext2D | null = null;
+    let lastRw = 0;
+    let lastRh = 0;
 
-    const resize = () => {
+    const applyResize = () => {
       const dpr = Math.min(window.devicePixelRatio ?? 1, 2);
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -51,7 +56,16 @@ export function DynamicBackground() {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
       // Redraw immediately so there’s no blank or wrong-size frame after resize
-      draw();
+    };
+
+    let resizeTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    const resize = () => {
+      if (resizeTimeoutId != null) clearTimeout(resizeTimeoutId);
+      resizeTimeoutId = setTimeout(() => {
+        resizeTimeoutId = null;
+        applyResize();
+        requestAnimationFrame(draw);
+      }, RESIZE_DEBOUNCE_MS);
     };
 
     const draw = () => {
@@ -102,26 +116,33 @@ export function DynamicBackground() {
         }
       }
 
-      const offscreen = document.createElement("canvas");
-      offscreen.width = rw;
-      offscreen.height = rh;
-      const octx = offscreen.getContext("2d");
-      if (!octx) return;
-      octx.putImageData(imageData, 0, 0);
-
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(offscreen, 0, 0, rw, rh, 0, 0, w, h);
+      if (offscreen == null || lastRw !== rw || lastRh !== rh) {
+        offscreen = document.createElement("canvas");
+        offscreen.width = rw;
+        offscreen.height = rh;
+        offscreenCtx = offscreen.getContext("2d");
+        lastRw = rw;
+        lastRh = rh;
+      }
+      if (offscreen && offscreenCtx) {
+        offscreen.width = rw;
+        offscreen.height = rh;
+        offscreenCtx.putImageData(imageData, 0, 0);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(offscreen, 0, 0, rw, rh, 0, 0, w, h);
+      }
 
       animationId = requestAnimationFrame(draw);
     };
 
-    resize();
+    applyResize();
     window.addEventListener("resize", resize);
     draw();
 
     return () => {
       window.removeEventListener("resize", resize);
+      if (resizeTimeoutId != null) clearTimeout(resizeTimeoutId);
       cancelAnimationFrame(animationId);
     };
   }, []);

@@ -23,6 +23,9 @@
     "simplex-noise": "^4.0.3",
     "tailwind-merge": "^3.4.0"
   },
+  "overrides": {
+    "p-retry": "4.6.2"
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
