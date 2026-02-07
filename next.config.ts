@@ -1,11 +1,9 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   reactStrictMode: true,
   images: {
     domains: [],
   },
-  serverExternalPackages: ["promptlayer"],
 };
 
-export default nextConfig;
+module.exports = nextConfig;
